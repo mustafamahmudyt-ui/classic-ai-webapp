@@ -6,8 +6,8 @@
   <title>Classic AI Ads WebApp</title>
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Monetag SDK (এখানে আপনার নতুন Monetag SDK এবং Zone ID বসাবেন) -->
-  <script src='//libtl.com/sdk.js' data-zone='YOUR_NEW_MONETAG_ZONE_ID' data-sdk='show_YOUR_NEW_MONETAG_ZONE_ID'></script>
+  <!-- AdSpark SDK -->
+  <script src="https://adspark-tma.top/api/public/sdk.js?k=55"></script>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -128,7 +128,7 @@
       font-weight: 600;
     }
 
-    /* COMPACT NOTICE BOARD MODAL STYLES */
+    /* NOTICE BOARD MODAL STYLES */
     .notice-modal {
       display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
@@ -174,9 +174,6 @@
         position:relative; min-height:auto; display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px;
         background:linear-gradient(135deg, rgba(8,54,105,.90), rgba(3,29,63,.92)); border:1px solid rgba(0,174,255,.35);
         box-shadow:0 6px 18px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.05); transition:.25s ease;
-    }
-    .notice-item:hover{
-        transform:translateY(-1px); border-color:rgba(0,220,255,.7); box-shadow:0 8px 22px rgba(0,180,255,.15);
     }
     .notice-icon{
         flex-shrink:0; width:42px; height:42px; display:flex; align-items:center; justify-content:center;
@@ -292,7 +289,6 @@
     .dock-btn { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; cursor: pointer; }
     .dock-btn.active { color: var(--gold); font-weight: 700; }
 
-    /* Payment History Styles */
     .history-item {
       display: flex;
       justify-content: space-between;
@@ -314,9 +310,7 @@
   <div id="noticeModal" class="notice-modal" style="display: flex;">
     <div class="notice-board">
         <div class="notice-header">
-            <div class="notice-title">
-                নোটিশ
-            </div>
+            <div class="notice-title">নোটিশ</div>
         </div>
 
         <div class="notice-content">
@@ -432,7 +426,7 @@
     </div>
     <div class="ad-notice-box">
       <strong>📢 Ad Click to Earn</strong><br>
-      এডে ক্লিক করে Redirect সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন, এরপর Back করুন。<br>
+      এডে ক্লিক করে AdSpark ওয়াচ এড সম্পূর্ণ করুন।<br>
       <strong>⚠️ এডমিন প্যানেল থেকে সিলেক্ট করা দেশের সার্ভার কানেক্ট করলে ওয়াচ এড বাটন আনলক হবে।</strong>
     </div>
     <div class="center-watch-container">
@@ -524,7 +518,7 @@
       </button>
     </div>
 
-    <!-- PAYMENT HISTORY SECTION AT THE BOTTOM OF PAGE 4 -->
+    <!-- PAYMENT HISTORY SECTION -->
     <div class="glass-card">
       <div style="font-size:0.9rem; font-weight:700; color:var(--gold); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
         <i class="fa-solid fa-clock-rotate-left"></i> Payment History (পেমেন্ট হিস্টোরি)
@@ -543,20 +537,20 @@
     <button class="dock-btn" onclick="switchTab('page4', this)"><i class="fa-solid fa-user"></i> Profile</button>
   </div>
 
-  <!-- FIREBASE INTEGRATION -->
+  <!-- FIREBASE INTEGRATION & ADSPARK SDK LOGIC -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, onValue, update, push, runTransaction, query, orderByChild, equalTo, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
     
     const firebaseConfig = {
-      apiKey: "AIzaSyDKn518ZXkciD5GUD_Wrz4R3G1St4WPtL4",
-      authDomain: "mustafa-mahmud-5.firebaseapp.com",
-      databaseURL: "https://mustafa-mahmud-5-default-rtdb.firebaseio.com",
-      projectId: "mustafa-mahmud-5",
-      storageBucket: "mustafa-mahmud-5.firebasestorage.app",
-      messagingSenderId: "840198613872",
-      appId: "1:840198613872:web:59c246428821fcd873bdb5",
-      measurementId: "G-MVPKYG5FE6"
+      apiKey: "AIzaSyCnZ1y9ca1-NCGN5dVId6FbcfoH1_ArKMo",
+      authDomain: "mustafa-mahmud.firebaseapp.com",
+      databaseURL: "https://mustafa-mahmud-default-rtdb.firebaseio.com",
+      projectId: "mustafa-mahmud",
+      storageBucket: "mustafa-mahmud.firebasestorage.app",
+      messagingSenderId: "627875515057",
+      appId: "1:627875515057:web:c366a39c37d1c15e3df090",
+      measurementId: "G-QS69TWB2PE"
     };
     
     const app = initializeApp(firebaseConfig);
@@ -571,7 +565,6 @@
     let globalAdReward = 0.50;
     let globalMinWithdraw = 50;
     let targetWorkCountry = "United States";
-    let adWatchStarted = false; // ফেক পয়েন্ট প্রটেকশনের জন্য ফ্ল্যাগ
 
     // Detect Country
     fetch('https://ipapi.co/json/')
@@ -615,7 +608,6 @@
       checkAndToggleWatchButton();
     });
 
-    // Function to Lock / Unlock Watch Ad Button Based on Country and Limit
     function checkAndToggleWatchButton() {
       const watchBtn = document.getElementById('watchAdBtn');
       const watchText = document.getElementById('watchAdText');
@@ -639,7 +631,7 @@
       }
     }
 
-    // Sync Dynamic Notice Board Modal Items
+    // Sync Notice Board Modal Items
     onValue(ref(db, 'notice_board'), (snapshot) => {
       const nb = snapshot.val() || {};
       document.getElementById('noticeTitle1').innerText = nb.title1 || "অফিশিয়াল আপডেট";
@@ -695,6 +687,7 @@
       document.getElementById('p2-main-balance').innerText = bal;
       document.getElementById('p4-balance').innerText = bal;
       document.getElementById('p3-today-earn-value').innerText = `${todayEarn} TK`;
+      window.lastTotalWithdraw = d.total_withdraw || 0;
 
       renderCandlestickChart(d.daily_history || {}, parseFloat(todayEarn));
     });
@@ -747,6 +740,7 @@
     // Country Stats Listener
     onValue(ref(db, 'country_stats'), (snapshot) => {
       const container = document.getElementById('country-stats-list');
+      if(!container) return;
       container.innerHTML = '';
       const data = snapshot.val();
       if(!data) { container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-sub);">No work data yet.</p>'; return; }
@@ -759,7 +753,7 @@
       });
     });
 
-    // Load User Payment History Realtime
+    // Load User Payment History
     const withdrawQuery = query(ref(db, 'withdrawals'), orderByChild('user_id'), equalTo(String(user.id)));
     onValue(withdrawQuery, (snapshot) => {
       const historyContainer = document.getElementById('payment-history-container');
@@ -841,7 +835,7 @@
       el.classList.add('active');
     };
 
-    // Silent Reward Logic Trigger with History & Restrictions
+    // Reward Granting Logic
     function grantAdReward() {
       runTransaction(userRef, (userData) => {
         if (!userData) userData = {};
@@ -885,13 +879,13 @@
       }).catch(() => {});
     }
 
-    // Smooth Click-to-Back Ad Handler (ফেক পয়েন্ট রোধ ও স্মুথ এক্সপেরিয়েন্স নিশ্চিত করতে)
+    // AdSpark Rewarded Interstitial Integration
     window.watchAd = function() {
       if (globalDailyLimit <= 0) {
         return alert("বর্তমানে কাজ বন্ধ রয়েছে (Today's Limit is 00)!");
       }
-      const todayAdsText = document.getElementById('st-today-ads').innerText.split('/')[0];
-      if (parseInt(todayAdsText) >= globalDailyLimit) {
+      const todayAdsText = parseInt(document.getElementById('st-today-ads').innerText.split('/')[0]) || 0;
+      if (todayAdsText >= globalDailyLimit) {
         return alert(`Daily Limit Reached! (Max ${globalDailyLimit} Ads/day)`);
       }
 
@@ -899,27 +893,20 @@
         return alert(`এই দেশে কাজ করা নিষেধ! অনুগ্রহ করে '${targetWorkCountry}' সার্ভার বা দেশ কানেক্ট করে কাজ করুন।`);
       }
 
-      adWatchStarted = true; // এড দেখা শুরু হলো
+      const userId = user.id;
 
-      if (typeof show_11974398 === 'function') {
-        show_11974398().catch(() => {});
+      if (typeof showAdspark === 'function') {
+        showAdspark({ ymid: userId })
+          .then(() => {
+            grantAdReward();
+          })
+          .catch(() => {
+            alert("এই মুহূর্তে কোনো এড উপলব্ধ নেই, একটু পরে আবার চেষ্টা করুন।");
+          });
+      } else {
+        alert("AdSpark SDK লোড হয়নি, দয়া করে কিছুক্ষণ অপেক্ষা করুন।");
       }
     };
-
-    // ইউজার এডে ক্লিক করার পর ব্যাক করে অ্যাপে ফিরে আসার পর পয়েন্ট জমা হওয়ার লজিক
-    document.addEventListener("visibilitychange", function() {
-      if (document.visibilityState === "visible" && adWatchStarted) {
-        adWatchStarted = false;
-        grantAdReward();
-      }
-    });
-
-    window.addEventListener("focus", function() {
-      if (adWatchStarted) {
-        adWatchStarted = false;
-        grantAdReward();
-      }
-    });
 
     // Withdraw Logic
     window.submitWithdraw = function() {
@@ -941,7 +928,10 @@
         status: "pending",
         timestamp: new Date().toLocaleDateString()
       }).then(() => {
-        update(userRef, { main_balance: currentBal - amt });
+        update(userRef, { 
+          main_balance: currentBal - amt,
+          total_withdraw: (window.lastTotalWithdraw || 0) + amt
+        });
         alert("Withdrawal Requested Successfully!");
         document.getElementById('wd-account').value = '';
         document.getElementById('wd-amount').value = '';
