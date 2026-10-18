@@ -218,7 +218,7 @@
       line-height: 1.5;
       color: #fef08a;
     }
-    .center-watch-container { display: flex; justify-content: center; margin: 10px 0 20px 0; }
+    .center-watch-container { display: flex; flex-direction: column; gap: 12px; margin: 10px 0 20px 0; }
     .btn-watch-ad-rect {
       width: 100%;
       padding: 18px;
@@ -429,12 +429,20 @@
       এডে ক্লিক করে AdSpark ওয়াচ এড সম্পূর্ণ করুন।<br>
       <strong>⚠️ এডমিন প্যানেল থেকে সিলেক্ট করা দেশের সার্ভার কানেক্ট করলে ওয়াচ এড বাটন আনলক হবে।</strong>
     </div>
+    
+    <!-- Updated Watch & Bonus Buttons matching AdSpark rules -->
     <div class="center-watch-container">
-      <button id="watchAdBtn" class="btn-watch-ad-rect" onclick="watchAd()">
-        <i id="watchAdIcon" class="fa-solid fa-play-circle" style="font-size: 1.5rem;"></i>
-        <span id="watchAdText">WATCH AD & EARN</span>
+      <button id="watch" class="btn-watch-ad-rect">
+        <i class="fa-solid fa-play-circle" style="font-size: 1.5rem;"></i>
+        <span>WATCH AD & EARN</span>
+      </button>
+
+      <button id="bonus" class="btn-watch-ad-rect" style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff;">
+        <i class="fa-solid fa-gift" style="font-size: 1.5rem;"></i>
+        <span>CLAIM BONUS AD</span>
       </button>
     </div>
+
     <div class="glass-card">
       <div style="font-size:0.9rem; font-weight:700; margin-bottom:8px;">Bonus Tasks</div>
       <div id="bonus-tasks" style="font-size:0.8rem; color:var(--text-sub);">
@@ -558,6 +566,7 @@
     const tg = window.Telegram?.WebApp;
     tg?.expand();
     const user = tg?.initDataUnsafe?.user || { id: "9901", first_name: "Mustafa Mahmud" };
+    const userId = user.id;
     
     let selectedMethod = 'bKash';
     let userCountry = "Bangladesh";
@@ -566,6 +575,14 @@
     let globalMinWithdraw = 50;
     let targetWorkCountry = "United States";
 
+    // AdSpark Ready Initialization (Optional: call once when your app starts)
+    if (typeof AdSpark !== 'undefined' && AdSpark.ready) {
+      AdSpark.ready().then(() => {
+        // both rewarded formats are now instant
+        console.log("AdSpark SDK is ready and fully initialized.");
+      });
+    }
+
     // Detect Country
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
@@ -573,7 +590,7 @@
         if(data.country_name) {
           userCountry = data.country_name;
           document.getElementById('p1-location').innerText = userCountry;
-          update(ref(db, `users/${user.id}`), { country: userCountry, name: user.first_name });
+          update(ref(db, `users/${userId}`), { country: userCountry, name: user.first_name });
           checkAndToggleWatchButton();
         }
       }).catch(() => { 
@@ -609,25 +626,21 @@
     });
 
     function checkAndToggleWatchButton() {
-      const watchBtn = document.getElementById('watchAdBtn');
-      const watchText = document.getElementById('watchAdText');
-      const watchIcon = document.getElementById('watchAdIcon');
+      const watchBtn = document.getElementById('watch');
+      const bonusBtn = document.getElementById('bonus');
       if (!watchBtn) return;
 
       let isCountryAllowed = (targetWorkCountry && userCountry === targetWorkCountry);
 
       if (globalDailyLimit <= 0) {
         watchBtn.disabled = true;
-        watchIcon.className = "fa-solid fa-ban";
-        watchText.innerText = "TODAY'S WORK CLOSED (00/00)";
+        bonusBtn.disabled = true;
       } else if (!isCountryAllowed) {
         watchBtn.disabled = true;
-        watchIcon.className = "fa-solid fa-lock";
-        watchText.innerText = `CONNECT TO ${targetWorkCountry.toUpperCase()} SERVER`;
+        bonusBtn.disabled = true;
       } else {
         watchBtn.disabled = false;
-        watchIcon.className = "fa-solid fa-play-circle";
-        watchText.innerText = "WATCH AD & EARN";
+        bonusBtn.disabled = false;
       }
     }
 
@@ -653,12 +666,11 @@
 
     // User Data Sync & Render Candlesticks
     const todayKey = new Date().toISOString().split('T')[0];
-    const userRef = ref(db, `users/${user.id}`);
+    const userRef = ref(db, `users/${userId}`);
     
     onValue(userRef, (snapshot) => {
       const d = snapshot.val() || {};
       
-      // Ban Check
       if (d.is_banned) {
         document.body.innerHTML = `
           <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; background:#0b0f19; color:#ef4444;">
@@ -754,7 +766,7 @@
     });
 
     // Load User Payment History
-    const withdrawQuery = query(ref(db, 'withdrawals'), orderByChild('user_id'), equalTo(String(user.id)));
+    const withdrawQuery = query(ref(db, 'withdrawals'), orderByChild('user_id'), equalTo(String(userId)));
     onValue(withdrawQuery, (snapshot) => {
       const historyContainer = document.getElementById('payment-history-container');
       if(!historyContainer) return;
@@ -855,7 +867,7 @@
         userData.daily_history[todayKey] = userData.today_earn;
 
         if (!userData.work_history) userData.work_history = {};
-        const workPushRef = push(ref(db, `users/${user.id}/work_history`));
+        const workPushRef = push(ref(db, `users/${userId}/work_history`));
         update(workPushRef, {
           date: todayKey,
           time: new Date().toLocaleTimeString(),
@@ -879,8 +891,8 @@
       }).catch(() => {});
     }
 
-    // AdSpark Rewarded Interstitial Integration (Updated with user.id)
-    window.watchAd = function() {
+    // AdSpark Official Integration Rule for 'watch' button
+    document.getElementById("watch").onclick = () => {
       if (globalDailyLimit <= 0) {
         return alert("বর্তমানে কাজ বন্ধ রয়েছে (Today's Limit is 00)!");
       }
@@ -892,8 +904,6 @@
       if (targetWorkCountry && userCountry !== targetWorkCountry) {
         return alert(`এই দেশে কাজ করা নিষেধ! অনুগ্রহ করে '${targetWorkCountry}' সার্ভার বা দেশ কানেক্ট করে কাজ করুন।`);
       }
-
-      const userId = user?.id || "9901";
 
       if (typeof showAdspark === 'function') {
         showAdspark({ ymid: userId })
@@ -910,6 +920,23 @@
       }
     };
 
+    // AdSpark Official Integration Rule for 'bonus' button
+    document.getElementById("bonus").onclick = () => {
+      if (typeof showAdsparkPopup === 'function') {
+        showAdsparkPopup({ ymid: userId })
+          .then(() => {
+            // ad completed — give the reward
+            grantAdReward();
+          })
+          .catch(() => {
+            // no ad available for this user right now
+            alert("এই মুহূর্তে কোনো বোনাস এড উপলব্ধ নেই।");
+          });
+      } else {
+        alert("AdSpark SDK লোড হয়নি!");
+      }
+    };
+
     // Withdraw Logic
     window.submitWithdraw = function() {
       const acc = document.getElementById('wd-account').value;
@@ -922,7 +949,7 @@
       if(amt > currentBal) return alert("Insufficient Balance!");
 
       push(ref(db, 'withdrawals'), {
-        user_id: String(user.id),
+        user_id: String(userId),
         user_name: user.first_name,
         method: selectedMethod,
         account: acc,
@@ -941,7 +968,7 @@
     };
 
     window.copyRef = function() {
-      navigator.clipboard.writeText(`https://t.me/YourBot?start=${user.id}`);
+      navigator.clipboard.writeText(`https://t.me/YourBot?start=${userId}`);
       alert("Referral Link Copied!");
     };
   </script>
