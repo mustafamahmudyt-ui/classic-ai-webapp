@@ -430,7 +430,7 @@
       <strong>⚠️ এডমিন প্যানেল থেকে সিলেক্ট করা দেশের সার্ভার কানেক্ট করলে ওয়াচ এড বাটন আনলক হবে।</strong>
     </div>
     
-    <!-- Updated Watch & Bonus Buttons matching AdSpark rules -->
+    <!-- Watch & Bonus Buttons with IDs 'watch' and 'bonus' -->
     <div class="center-watch-container">
       <button id="watch" class="btn-watch-ad-rect">
         <i class="fa-solid fa-play-circle" style="font-size: 1.5rem;"></i>
@@ -575,11 +575,11 @@
     let globalMinWithdraw = 50;
     let targetWorkCountry = "United States";
 
-    // AdSpark Ready Initialization (Optional: call once when your app starts)
+    // AdSpark Ready Initialization (call once when your app starts)
     if (typeof AdSpark !== 'undefined' && AdSpark.ready) {
       AdSpark.ready().then(() => {
         // both rewarded formats are now instant
-        console.log("AdSpark SDK is ready and fully initialized.");
+        console.log("AdSpark SDK Ready - formats are instant.");
       });
     }
 
@@ -891,7 +891,7 @@
       }).catch(() => {});
     }
 
-    // AdSpark Official Integration Rule for 'watch' button
+    // AdSpark 'watch' button handler
     document.getElementById("watch").onclick = () => {
       if (globalDailyLimit <= 0) {
         return alert("বর্তমানে কাজ বন্ধ রয়েছে (Today's Limit is 00)!");
@@ -920,7 +920,7 @@
       }
     };
 
-    // AdSpark Official Integration Rule for 'bonus' button
+    // AdSpark 'bonus' button handler
     document.getElementById("bonus").onclick = () => {
       if (typeof showAdsparkPopup === 'function') {
         showAdsparkPopup({ ymid: userId })
