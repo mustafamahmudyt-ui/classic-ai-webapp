@@ -1,976 +1,366 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Classic AI Ads WebApp</title>
-  
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- AdSpark SDK -->
-  <script src="https://adspark-tma.top/api/public/sdk.js?k=55"></script>
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #070a12 100%);
-      --card-bg: rgba(23, 32, 51, 0.65);
-      --card-border: rgba(212, 175, 55, 0.2);
-      --gold: #d4af37;
-      --gold-glow: rgba(212, 175, 55, 0.25);
-      --text-main: #f8fafc;
-      --text-sub: #94a3b8;
-      
-      --bkash: #e2136e;
-      --nagad: #f7931e;
-      --rocket: #8c3494;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', 'Noto Sans Bengali', sans-serif; -webkit-tap-highlight-color: transparent; }
-    
-    body { 
-      background: var(--bg-gradient); 
-      color: var(--text-main); 
-      min-height: 100vh; 
-      padding-bottom: 90px; 
-      overflow-x: hidden;
-      position: relative;
-    }
-    body::before {
-      content: "AI SYSTEM";
-      position: fixed;
-      top: 40%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-30deg);
-      font-family: 'Cinzel', serif;
-      font-size: 15vw;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.02);
-      white-space: nowrap;
-      pointer-events: none;
-      z-index: 0;
-      animation: watermarkPulse 6s ease-in-out infinite alternate;
-    }
-    @keyframes watermarkPulse {
-      0% { opacity: 0.01; transform: translate(-50%, -50%) rotate(-30deg) scale(0.95); }
-      100% { opacity: 0.04; transform: translate(-50%, -50%) rotate(-30deg) scale(1.05); }
-    }
-    .page { display: none; padding: 18px; position: relative; z-index: 1; opacity: 0; transform: translateY(10px); transition: all 0.3s ease; }
-    .page.active { display: block; opacity: 1; transform: translateY(0); }
-    .glass-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-    .profile-header { display: flex; align-items: center; gap: 14px; }
-    .profile-avatar { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; }
-    .user-name { font-size: 1.1rem; font-weight: 700; color: #fff; }
-    
-    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
-    .stat-box { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.05); padding: 14px; border-radius: 14px; text-align: center; }
-    .stat-label { font-size: 0.75rem; color: var(--text-sub); text-transform: uppercase; font-weight: 600; }
-    .stat-value { font-size: 1.25rem; font-weight: 800; color: var(--gold); margin-top: 4px; }
-
-    /* Candlestick Chart UI Styles */
-    .candle-chart-container {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      height: 140px;
-      padding: 15px 5px 5px 5px;
-      gap: 6px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    .candle-column {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex: 1;
-      height: 100%;
-      justify-content: flex-end;
-      position: relative;
-    }
-    .candle-stick {
-      width: 2px;
-      background: rgba(255, 255, 255, 0.3);
-      position: absolute;
-      top: 10%;
-      bottom: 25px;
-      z-index: 1;
-    }
-    .candle-body {
-      width: 100%;
-      max-width: 18px;
-      border-radius: 4px;
-      z-index: 2;
-      transition: height 0.4s ease, background 0.4s ease;
-      min-height: 6px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.5);
-    }
-    .candle-body.green {
-      background: linear-gradient(180deg, #10b981, #059669);
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-    }
-    .candle-body.red {
-      background: linear-gradient(180deg, #ef4444, #dc2626);
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
-    }
-    .candle-date-label {
-      font-size: 0.65rem;
-      color: var(--text-sub);
-      margin-top: 8px;
-      text-align: center;
-      white-space: nowrap;
-      font-weight: 600;
-    }
-
-    /* NOTICE BOARD MODAL STYLES */
-    .notice-modal {
-      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
-      z-index: 1000; align-items: center; justify-content: center; padding: 12px;
-      overflow-y: auto;
-    }
-    .notice-board{
-        width:100%;
-        max-width:480px;
-        position:relative;
-        padding:18px 16px 16px;
-        border-radius:20px;
-        background:linear-gradient(145deg, rgba(7,39,83,.96), rgba(2,19,48,.98));
-        border:1px solid rgba(0,174,255,.55);
-        box-shadow:0 20px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
-        overflow:hidden;
-        text-align: left;
-    }
-    .notice-board::before{
-        content:""; position:absolute; width:200px; height:200px; top:-100px; left:-80px;
-        background:rgba(0,174,255,.18); filter:blur(50px); border-radius:50%;
-    }
-    .notice-board::after{
-        content:""; position:absolute; width:180px; height:180px; right:-80px; bottom:-80px;
-        background:rgba(0,255,200,.10); filter:blur(50px); border-radius:50%;
-    }
-    .notice-header{
-        position:relative; z-index:2; display:flex; align-items:center; justify-content:center; margin-bottom:14px;
-    }
-    .notice-title{
-        position:relative; padding:8px 28px; font-size:22px; font-weight:900; letter-spacing:1px; color:#fff;
-        background:linear-gradient(135deg,#0757a5,#009fe3); border-radius:12px; border:1px solid rgba(255,255,255,.2);
-        box-shadow:0 6px 18px rgba(0,150,255,.25), inset 0 1px 0 rgba(255,255,255,.18);
-    }
-    .notice-title::before{
-        content:""; position:absolute; width:40px; height:3px; left:50%; bottom:-6px; transform:translateX(-50%);
-        border-radius:20px; background:#00e5ff; box-shadow:0 0 10px #00e5ff;
-    }
-    .notice-content{
-        position:relative; z-index:2; display:flex; flex-direction:column; gap:10px; max-height: 52vh; overflow-y: auto; padding-right: 4px;
-    }
-    .notice-item{
-        position:relative; min-height:auto; display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:14px;
-        background:linear-gradient(135deg, rgba(8,54,105,.90), rgba(3,29,63,.92)); border:1px solid rgba(0,174,255,.35);
-        box-shadow:0 6px 18px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.05); transition:.25s ease;
-    }
-    .notice-icon{
-        flex-shrink:0; width:42px; height:42px; display:flex; align-items:center; justify-content:center;
-        border-radius:12px; font-size:20px; background:linear-gradient(145deg, #0879d1, #043c86);
-        border:1px solid rgba(255,255,255,.15); box-shadow:0 4px 12px rgba(0,130,255,.25), inset 0 1px 0 rgba(255,255,255,.18);
-    }
-    .notice-text{ flex:1; min-width:0; }
-    .notice-text h3{ margin-bottom:3px; font-size:15px; font-weight:800; color:#fff; }
-    .notice-text p{ font-size:12px; line-height:1.5; color:#b9d5ee; }
-    .notice-item.warning{
-        background:linear-gradient(135deg, rgba(91,23,37,.85), rgba(48,12,24,.92)); border-color:rgba(255,75,90,.45);
-    }
-    .notice-item.warning .notice-icon{
-        background:linear-gradient(145deg, #e52b42, #8d0e24);
-    }
-    .notice-item.success{
-        background:linear-gradient(135deg, rgba(5,91,70,.85), rgba(3,50,43,.92)); border-color:rgba(0,255,170,.35);
-    }
-    .notice-item.success .notice-icon{
-        background:linear-gradient(145deg, #00c987, #087653);
-    }
-    .notice-footer{
-        position:relative; z-index:2; display:flex; align-items:center; gap:10px; margin-top:14px;
-    }
-    .footer-line{ height:2px; flex:1; background:linear-gradient(90deg, transparent, #00cfff); opacity:.7; }
-    .footer-line:last-child{ background:linear-gradient(90deg, #00cfff, transparent); }
-
-    .btn-understand {
-      width: 100%; margin-top: 12px; padding: 11px; background: linear-gradient(135deg, #0757a5, #009fe3);
-      color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-weight: 800; font-size: 0.95rem;
-      cursor: pointer; box-shadow: 0 4px 15px rgba(0,150,255,0.3); position: relative; z-index: 2; transition: 0.2s;
-    }
-    .btn-understand:hover { transform: translateY(-2px); opacity: 0.95; }
-    
-    .ad-notice-box {
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      border-radius: 14px;
-      padding: 14px;
-      margin: 15px 0;
-      font-size: 0.82rem;
-      line-height: 1.5;
-      color: #fef08a;
-    }
-    .center-watch-container { display: flex; flex-direction: column; gap: 12px; margin: 10px 0 20px 0; }
-    .btn-watch-ad-rect {
-      width: 100%;
-      padding: 18px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #d4af37, #f59e0b);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #0f172a;
-      font-size: 1.1rem;
-      font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      box-shadow: 0 0 20px var(--gold-glow);
-      animation: pulseBtnRect 2s infinite;
-      transition: 0.3s ease;
-    }
-    .btn-watch-ad-rect:disabled {
-      background: #334155 !important;
-      color: #94a3b8 !important;
-      border-color: #475569 !important;
-      box-shadow: none !important;
-      animation: none !important;
-      cursor: not-allowed !important;
-    }
-    @keyframes pulseBtnRect {
-      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.5); }
-      70% { transform: scale(1.02); box-shadow: 0 0 0 12px rgba(212, 175, 55, 0); }
-      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
-    }
-    .country-work-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
-    .country-work-row:last-child { border-bottom: none; }
-    
-    .tab-bar-side { display: flex; gap: 10px; margin-bottom: 16px; }
-    .side-tab-btn {
-      flex: 1; padding: 12px; border: 1px solid var(--card-border);
-      background: rgba(15, 23, 42, 0.8); color: var(--text-sub);
-      font-weight: 700; border-radius: 12px; cursor: pointer; text-align: center;
-      transition: all 0.3s ease;
-    }
-    .side-tab-btn.active {
-      background: linear-gradient(135deg, #d4af37, #f59e0b);
-      color: #0f172a; border-color: transparent; box-shadow: 0 0 15px var(--gold-glow);
-    }
-    .rank-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px; margin-bottom: 8px; border-radius: 12px;
-      background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.05);
-    }
-    .rank-top-1 { border-color: #ffd700; background: rgba(255, 215, 0, 0.1); }
-    .rank-top-2 { border-color: #c0c0c0; background: rgba(192, 192, 192, 0.1); }
-    .rank-top-3 { border-color: #cd7f32; background: rgba(205, 127, 50, 0.1); }
-    .rank-badge { width: 30px; font-weight: 800; font-size: 1rem; text-align: center; }
-    .rank-top-1 .rank-badge { color: #ffd700; }
-    .rank-top-2 .rank-badge { color: #c0c0c0; }
-    .rank-top-3 .rank-badge { color: #cd7f32; }
-    
-    .payment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
-    .pay-card { padding: 12px 8px; border-radius: 12px; text-align: center; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: 2px solid transparent; color: #fff; opacity: 0.7; }
-    .pay-card.bkash { background: var(--bkash); }
-    .pay-card.nagad { background: var(--nagad); }
-    .pay-card.rocket { background: var(--rocket); }
-    .pay-card.active { opacity: 1; border-color: #fff; transform: translateY(-3px); }
-    .custom-input { width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 0.9rem; outline: none; margin-bottom: 10px; }
-    .btn-whatsapp { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; background: #25D366; color: #fff; text-decoration: none; border-radius: 12px; font-weight: 700; margin: 10px 0; }
-    .dock-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(11, 15, 25, 0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 10; }
-    .dock-btn { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; cursor: pointer; }
-    .dock-btn.active { color: var(--gold); font-weight: 700; }
-
-    .history-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      border-radius: 10px;
-      background: rgba(15, 23, 42, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: 0.85rem;
-    }
-    .history-status-pending { color: #f59e0b; font-weight: 700; }
-    .history-status-approved { color: #10b981; font-weight: 700; }
-    .history-status-rejected { color: #ef4444; font-weight: 700; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanjib Earning</title>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Ads-Spark SDK -->
+    <script src="https://shev.pro/sdk.js" data-zone="YOUR_ZONE_ID"></script>
+    <style>
+        :root {
+            --bg-color: #0d1b2a;
+            --card-bg: #1b263b;
+            --accent-color: #00b4d8;
+            --text-color: #ffffff;
+            --text-secondary: #94a3b8;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+        header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #1b263b, #0d1b2a);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            object-fit: cover;
+            box-shadow: 0 0 15px rgba(0, 180, 216, 0.4);
+            margin-bottom: 10px;
+        }
+        .username {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .balance-badge {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-color);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-color);
+            box-shadow: inset 0 0 10px rgba(0, 180, 216, 0.2);
+        }
+        .container {
+            padding: 15px;
+            flex: 1;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .grid-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .card-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .card-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .full-card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .btn {
+            background: linear-gradient(135deg, #0077b6, var(--accent-color));
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 180, 216, 0.3);
+            transition: 0.2s;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            background: #0d1b2a;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+        }
+        /* Bottom Navigation */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #0b132b;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-item {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 11px;
+            cursor: pointer;
+            flex: 1;
+        }
+        .nav-item.active {
+            color: var(--accent-color);
+        }
+        .nav-item svg {
+            width: 22px;
+            height: 22px;
+            margin-bottom: 3px;
+            fill: currentColor;
+        }
+    </style>
 </head>
 <body>
-  <!-- POPUP NOTICE BOARD MODAL ON ENTER -->
-  <div id="noticeModal" class="notice-modal" style="display: flex;">
-    <div class="notice-board">
-        <div class="notice-header">
-            <div class="notice-title">নোটিশ</div>
-        </div>
 
-        <div class="notice-content">
-            <div class="notice-item">
-                <div class="notice-icon">🔔</div>
-                <div class="notice-text">
-                    <h3 id="noticeTitle1">অফিশিয়াল আপডেট</h3>
-                    <p id="noticeText1">লোড হচ্ছে...</p>
+    <header>
+        <div style="font-weight: bold; font-size: 18px;">Tanjib Earning</div>
+    </header>
+
+    <div class="profile-section">
+        <img id="userAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb" class="avatar" alt="Avatar">
+        <div class="username" id="userName">Mahmud</div>
+        <div class="balance-badge" id="mainHeaderBalance">Balance: 0.00 TK</div>
+    </div>
+
+    <div class="container">
+        <!-- HOME TAB -->
+        <div id="tab-home" class="tab-content active">
+            <div class="grid-stats">
+                <div class="card">
+                    <div class="card-title">Today's Ads</div>
+                    <div class="card-value" id="todayAds">0/5000</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Referrals</div>
+                    <div class="card-value">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Total View</div>
+                    <div class="card-value" id="totalView">0</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Earned</div>
+                    <div class="card-value" id="earnedAmount">0.00</div>
                 </div>
             </div>
-
-            <div class="notice-item">
-                <div class="notice-icon">🌍</div>
-                <div class="notice-text">
-                    <h3 id="noticeTitle2">সার্ভার আপডেট</h3>
-                    <p id="noticeText2">লোড হচ্ছে...</p>
-                </div>
-            </div>
-
-            <div class="notice-item warning">
-                <div class="notice-icon">⚠️</div>
-                <div class="notice-text">
-                    <h3 id="noticeTitle3">সতর্কবার্তা</h3>
-                    <p id="noticeText3">লোড হচ্ছে...</p>
-                </div>
-            </div>
-
-            <div class="notice-item success">
-                <div class="notice-icon">✓</div>
-                <div class="notice-text">
-                    <h3 id="noticeTitle4">পেমেন্ট নোটিশ</h3>
-                    <p id="noticeText4">লোড হচ্ছে...</p>
+            <div class="full-card">
+                <div class="card-title">Last 7 Days Earnings</div>
+                <div style="height: 60px; display: flex; align-items: flex-end; justify-content: space-between; padding-top: 10px; color: var(--text-secondary); font-size: 11px;">
+                    <span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span>
                 </div>
             </div>
         </div>
 
-        <div class="notice-footer">
-            <div class="footer-line"></div>
-            <div class="footer-line"></div>
+        <!-- TASKS TAB -->
+        <div id="tab-tasks" class="tab-content">
+            <div class="full-card" style="text-align: center;">
+                <div class="card-title">Watch & Earn</div>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Ads-Spark নিয়ম অনুযায়ী বিজ্ঞাপন দেখে আয় করুন।</p>
+                <!-- id="watch" যুক্ত করা হয়েছে -->
+                <button class="btn" id="watch">Watch Ad & Earn</button>
+            </div>
         </div>
 
-        <button class="btn-understand" onclick="closeNotice()">আচ্ছা ঠিক আছে</button>
-    </div>
-  </div>
-  
-  <!-- PAGE 1: DASHBOARD -->
-  <div id="page1" class="page active">
-    <div class="glass-card profile-header">
-      <img id="p1-avatar" class="profile-avatar" src="https://ui-avatars.com/api/?name=User" alt="Profile">
-      <div>
-        <div id="p1-name" class="user-name">User Name</div>
-        <div style="font-size:0.78rem; color:var(--text-sub);">
-          📍 Server: <span id="p1-location" style="color:var(--gold);">Detecting...</span> | 🕒 <span id="p1-time">--:-- --</span>
+        <!-- TOP TAB -->
+        <div id="tab-top" class="tab-content">
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn" style="background: var(--card-bg); border: 1px solid var(--accent-color);">Top Referrers</button>
+            </div>
+            <div class="full-card" style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="color: var(--accent-color); font-weight: bold;">#1</span>
+                    <div style="width: 35px; height: 35px; background: #334155; border-radius: 50%;"></div>
+                    <span>Guest</span>
+                </div>
+                <span style="font-weight: bold;">0</span>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="glass-card">
-      <div style="font-size:0.9rem; font-weight:700; color:var(--gold);">Overview Statistics</div>
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-label">Today's Ads</div>
-          <div id="st-today-ads" class="stat-value">0/00</div>
+
+        <!-- PROFILE TAB -->
+        <div id="tab-profile" class="tab-content">
+            <div class="full-card">
+                <div class="card-title" style="font-size: 15px; margin-bottom: 10px;">Withdraw Money</div>
+                <div class="input-group">
+                    <label>Payment Method</label>
+                    <select id="payMethod">
+                        <option>Select a Method</option>
+                        <option>Bkash</option>
+                        <option>Nagad</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Account Number</label>
+                    <input type="text" placeholder="Enter wallet number">
+                </div>
+                <div class="input-group">
+                    <label>Amount (TK)</label>
+                    <input type="number" id="withdrawAmount" placeholder="0.00">
+                </div>
+                <button class="btn" onclick="requestWithdraw()">Request Withdraw</button>
+            </div>
         </div>
-        <div class="stat-box">
-          <div class="stat-label">Total Referrals</div>
-          <div id="st-referrals" class="stat-value">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Total Views</div>
-          <div id="st-total-views" class="stat-value">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Total Income</div>
-          <div id="st-total-income" class="stat-value">0.00 TK</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Lifetime Income</div>
-          <div id="st-lifetime-income" class="stat-value">0.00 TK</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-label">Total Withdraw</div>
-          <div id="st-total-withdraw" class="stat-value">0.00 TK</div>
-        </div>
-      </div>
     </div>
 
-    <!-- CANDLESTICK CHART & DAILY DATE LIST SECTION -->
-    <div class="glass-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <div style="font-size:0.88rem; font-weight:700; color:var(--gold); display:flex; align-items:center; gap:6px;">
-          <i class="fa-solid fa-chart-simple"></i> Live Daily Statistics (Candlestick)
-        </div>
-        <div style="font-size:0.72rem; color:var(--text-sub);">লাইভ আপডেট</div>
-      </div>
-      
-      <!-- Candlestick Chart UI Container -->
-      <div id="candlestickChart" class="candle-chart-container">
-        <!-- Dynamic Candlesticks & Dates Auto Generated Here -->
-      </div>
-    </div>
-  </div>
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('home', this)">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            Home
+        </button>
+        <button class="nav-item" onclick="switchTab('tasks', this)">
+            <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+            Tasks
+        </button>
+        <button class="nav-item" onclick="switchTab('top', this)">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            Top
+        </button>
+        <button class="nav-item" onclick="switchTab('profile', this)">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            Profile
+        </button>
+    </nav>
 
-  <!-- PAGE 2: WATCH & EARN -->
-  <div id="page2" class="page">
-    <div class="glass-card profile-header">
-      <img id="p2-avatar" class="profile-avatar" src="https://ui-avatars.com/api/?name=User" alt="Profile">
-      <div>
-        <div id="p2-name" class="user-name">User Name</div>
-        <div style="font-size:0.85rem; color:var(--gold); font-weight:700;">
-          Total Balance: <span id="p2-main-balance">0.00</span> TK
-        </div>
-      </div>
-    </div>
-    <div class="ad-notice-box">
-      <strong>📢 Ad Click to Earn</strong><br>
-      এডে ক্লিক করে AdSpark ওয়াচ এড সম্পূর্ণ করুন।<br>
-      <strong>⚠️ এডমিন প্যানেল থেকে সিলেক্ট করা দেশের সার্ভার কানেক্ট করলে ওয়াচ এড বাটন আনলক হবে।</strong>
-    </div>
-    
-    <!-- Watch & Bonus Buttons with IDs 'watch' and 'bonus' -->
-    <div class="center-watch-container">
-      <button id="watch" class="btn-watch-ad-rect">
-        <i class="fa-solid fa-play-circle" style="font-size: 1.5rem;"></i>
-        <span>WATCH AD & EARN</span>
-      </button>
-
-      <button id="bonus" class="btn-watch-ad-rect" style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff;">
-        <i class="fa-solid fa-gift" style="font-size: 1.5rem;"></i>
-        <span>CLAIM BONUS AD</span>
-      </button>
-    </div>
-
-    <div class="glass-card">
-      <div style="font-size:0.9rem; font-weight:700; margin-bottom:8px;">Bonus Tasks</div>
-      <div id="bonus-tasks" style="font-size:0.8rem; color:var(--text-sub);">
-        Complete daily tasks to double your earnings.
-      </div>
-    </div>
-    <div class="glass-card">
-      <div style="font-size:0.9rem; font-weight:700; color:var(--gold); margin-bottom:10px;">
-        🌐 Country Server Work Stats (লাইভ আপডেট)
-      </div>
-      <div id="country-stats-list">
-        <!-- Dynamic Country Stats -->
-      </div>
-    </div>
-  </div>
-
-  <!-- PAGE 3: LEADERBOARD -->
-  <div id="page3" class="page">
-    <div class="tab-bar-side">
-      <button class="side-tab-btn active" onclick="switchLeaderboardTab('earners', this)">
-        <i class="fa-solid fa-trophy"></i> Top Earners
-      </button>
-      <button class="side-tab-btn" onclick="switchLeaderboardTab('referrers', this)">
-        <i class="fa-solid fa-users"></i> Top Referrers
-      </button>
-    </div>
-    <div class="glass-card">
-      <div style="font-size:0.92rem; font-weight:800; color:var(--gold); margin-bottom:12px; text-transform:uppercase;">
-        🏆 Live Leaderboard Ranking
-      </div>
-      <div id="leaderboard-ranks-container">
-        <!-- Dynamic Leaderboard -->
-      </div>
-    </div>
-    <div class="glass-card" style="border-color: rgba(56, 189, 248, 0.3);">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-size:0.75rem; color:var(--text-sub); text-transform:uppercase;">Today's Earn (দৈনিক কাজের আপডেট)</div>
-          <div id="p3-today-earn-value" style="font-size:1.6rem; font-weight:800; color:#38bdf8; margin-top:2px;">0.00 TK</div>
-        </div>
-        <div style="font-size:0.72rem; color:var(--text-sub); text-align:right;">
-          <i class="fa-regular fa-clock"></i> রাত ১২ টার পর<br>অটো রিসেট হবে
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PAGE 4: PROFILE & WITHDRAW -->
-  <div id="page4" class="page">
-    <div style="text-align:center; margin-bottom:14px;">
-      <img id="p4-avatar" class="profile-avatar" style="width:70px; height:70px;" src="https://ui-avatars.com/api/?name=User" alt="Profile">
-      <div id="p4-name" class="user-name" style="font-size:1.2rem; margin-top:6px;">User Name</div>
-    </div>
-    <div class="glass-card" style="text-align:center;">
-      <div style="font-size:0.8rem; color:var(--text-sub);">Developer by Mustafa Mahmud</div>
-      <a href="https://whatsapp.com/dl/" target="_blank" class="btn-whatsapp">
-        <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i> WhatsApp Message
-      </a>
-    </div>
-    <div class="glass-card" style="text-align:center;">
-      <div class="stat-label">Current Balance</div>
-      <div style="font-size:1.6rem; font-weight:800; color:var(--gold);"><span id="p4-balance">0.00</span> TK</div>
-    </div>
-    <div class="glass-card">
-      <div style="font-size:0.85rem; font-weight:700;">Referral Link</div>
-      <button onclick="copyRef()" style="width:100%; padding:10px; margin-top:6px; background:rgba(255,255,255,0.1); border:1px solid var(--card-border); border-radius:10px; color:#fff; cursor:pointer;">
-        Copy Referral Link
-      </button>
-    </div>
-    <div class="glass-card">
-      <div style="font-size:0.9rem; font-weight:700; margin-bottom:8px;">Select Payment Method</div>
-      <div class="payment-grid">
-        <div class="pay-card bkash active" onclick="selectMethod('bKash', this)">bKash</div>
-        <div class="pay-card nagad" onclick="selectMethod('Nagad', this)">Nagad</div>
-        <div class="pay-card rocket" onclick="selectMethod('Rocket', this)">Rocket</div>
-      </div>
-      <input type="text" id="wd-account" class="custom-input" placeholder="Account Number">
-      <input type="number" id="wd-amount" class="custom-input" placeholder="Amount (TK)">
-      <button onclick="submitWithdraw()" style="width:100%; padding:14px; background:linear-gradient(135deg, #d4af37, #f59e0b); border:none; border-radius:12px; color:#0f172a; font-weight:800; cursor:pointer;">
-        Submit Request
-      </button>
-    </div>
-
-    <!-- PAYMENT HISTORY SECTION -->
-    <div class="glass-card">
-      <div style="font-size:0.9rem; font-weight:700; color:var(--gold); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-        <i class="fa-solid fa-clock-rotate-left"></i> Payment History (পেমেন্ট হিস্টোরি)
-      </div>
-      <div id="payment-history-container">
-        <p style="font-size:0.8rem; color:var(--text-sub); text-align:center;">কোনো পেমেন্ট হিস্টোরি পাওয়া যায়নি</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- DOCK NAVIGATION -->
-  <div class="dock-nav">
-    <button class="dock-btn active" onclick="switchTab('page1', this)"><i class="fa-solid fa-house"></i> Home</button>
-    <button class="dock-btn" onclick="switchTab('page2', this)"><i class="fa-solid fa-play"></i> Earn</button>
-    <button class="dock-btn" onclick="switchTab('page3', this)"><i class="fa-solid fa-trophy"></i> Ranks</button>
-    <button class="dock-btn" onclick="switchTab('page4', this)"><i class="fa-solid fa-user"></i> Profile</button>
-  </div>
-
-  <!-- FIREBASE INTEGRATION & ADSPARK SDK LOGIC -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue, update, push, runTransaction, query, orderByChild, equalTo, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-    
-    const firebaseConfig = {
-      apiKey: "AIzaSyDKn518ZXkciD5GUD_Wrz4R3G1St4WPtL4",
-      authDomain: "mustafa-mahmud-5.firebaseapp.com",
-      databaseURL: "https://mustafa-mahmud-5-default-rtdb.firebaseio.com",
-      projectId: "mustafa-mahmud-5",
-      storageBucket: "mustafa-mahmud-5.firebasestorage.app",
-      messagingSenderId: "840198613872",
-      appId: "1:840198613872:web:59c246428821fcd873bdb5",
-      measurementId: "G-MVPKYG5FE6"
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const tg = window.Telegram?.WebApp;
-    tg?.expand();
-    const user = tg?.initDataUnsafe?.user || { id: "9901", first_name: "Mustafa Mahmud" };
-    const userId = user.id;
-    
-    let selectedMethod = 'bKash';
-    let userCountry = "Bangladesh";
-    let globalDailyLimit = 20;
-    let globalAdReward = 0.50;
-    let globalMinWithdraw = 50;
-    let targetWorkCountry = "United States";
-
-    // AdSpark Ready Initialization (call once when your app starts)
-    if (typeof AdSpark !== 'undefined' && AdSpark.ready) {
-      AdSpark.ready().then(() => {
-        // both rewarded formats are now instant
-        console.log("AdSpark SDK Ready - formats are instant.");
-      });
-    }
-
-    // Detect Country
-    fetch('https://ipapi.co/json/')
-      .then(res => res.json())
-      .then(data => {
-        if(data.country_name) {
-          userCountry = data.country_name;
-          document.getElementById('p1-location').innerText = userCountry;
-          update(ref(db, `users/${userId}`), { country: userCountry, name: user.first_name });
-          checkAndToggleWatchButton();
+    <script>
+        // Telegram WebApp Initialization
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                document.getElementById('userName').innerText = tg.initDataUnsafe.user.first_name;
+            }
         }
-      }).catch(() => { 
-        document.getElementById('p1-location').innerText = userCountry; 
-        checkAndToggleWatchButton();
-      });
 
-    ['p1', 'p2', 'p4'].forEach(id => {
-      document.getElementById(`${id}-name`).innerText = user.first_name;
-      if(user.photo_url) document.getElementById(`${id}-avatar`).src = user.photo_url;
-    });
+        // Tab Switching Logic
+        function switchTab(tabName, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            element.classList.add('active');
+        }
 
-    // Clock
-    setInterval(() => {
-      const now = new Date();
-      let h = now.getHours();
-      const m = now.getMinutes().toString().padStart(2, '0');
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      document.getElementById('p1-time').innerText = `${h}:${m} ${ampm}`;
-      checkAndToggleWatchButton();
-    }, 1000);
+        // Earning State Variables
+        let balance = 0.00;
+        let totalViews = 0;
+        let todayAdsCount = 0;
 
-    // Sync Global Admin Settings & Lock/Unlock Watch Ad Button
-    onValue(ref(db, 'settings'), (snapshot) => {
-      const cfg = snapshot.val() || {};
-      globalDailyLimit = cfg.daily_limit !== undefined ? parseInt(cfg.daily_limit) : 20;
-      if(cfg.ad_reward) globalAdReward = parseFloat(cfg.ad_reward);
-      if(cfg.min_withdraw) globalMinWithdraw = parseFloat(cfg.min_withdraw);
-      if(cfg.target_country) targetWorkCountry = cfg.target_country;
-      
-      checkAndToggleWatchButton();
-    });
+        // Ads Spark Button Integration
+        const userId = tg?.initDataUnsafe?.user?.id;
 
-    function checkAndToggleWatchButton() {
-      const watchBtn = document.getElementById('watch');
-      const bonusBtn = document.getElementById('bonus');
-      if (!watchBtn) return;
+        document.getElementById("watch").onclick = () => {
+            if (typeof showAdspark === 'function') {
+                showAdspark({ ymid: userId })
+                    .then(() => {
+                        // ad completed — give the reward
+                        updateEarnings();
+                    })
+                    .catch(() => {
+                        // no ad available for this user right now
+                        alert("এই মুহূর্তে কোনো বিজ্ঞাপন এভেলেবল নেই, অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন।");
+                    });
+            } else {
+                // Testing fallback
+                alert("Ads-Spark SDK এখনো সঠিক ভাবে লোড হয়নি অথবা এটি ডেমো মোডে চলছে।");
+                updateEarnings();
+            }
+        };
 
-      let isCountryAllowed = (targetWorkCountry && userCountry === targetWorkCountry);
+        function updateEarnings() {
+            balance += 0.50; // প্রতি বিজ্ঞাপনে ০.৫০ টাকা যোগ হবে
+            totalViews += 1;
+            todayAdsCount += 1;
 
-      if (globalDailyLimit <= 0) {
-        watchBtn.disabled = true;
-        bonusBtn.disabled = true;
-      } else if (!isCountryAllowed) {
-        watchBtn.disabled = true;
-        bonusBtn.disabled = true;
-      } else {
-        watchBtn.disabled = false;
-        bonusBtn.disabled = false;
-      }
-    }
+            document.getElementById('mainHeaderBalance').innerText = `Balance: ${balance.toFixed(2)} TK`;
+            document.getElementById('earnedAmount').innerText = balance.toFixed(2);
+            document.getElementById('totalView').innerText = totalViews;
+            document.getElementById('todayAds').innerText = `${todayAdsCount}/5000`;
+        }
 
-    // Sync Notice Board Modal Items
-    onValue(ref(db, 'notice_board'), (snapshot) => {
-      const nb = snapshot.val() || {};
-      document.getElementById('noticeTitle1').innerText = nb.title1 || "অফিশিয়াল আপডেট";
-      document.getElementById('noticeText1').innerText = nb.text1 || "আমাদের বট অ্যাপে আপনাকে স্বাগতম।";
-      
-      document.getElementById('noticeTitle2').innerText = nb.title2 || "সার্ভার আপডেট";
-      document.getElementById('noticeText2').innerText = nb.text2 || "সকল দেশের সার্ভার সচল রয়েছে।";
-      
-      document.getElementById('noticeTitle3').innerText = nb.title3 || "সতর্কবার্তা";
-      document.getElementById('noticeText3').innerText = nb.text3 || "সঠিক নিয়ম মেনে প্রতিদিন কাজ সম্পন্ন করুন।";
-      
-      document.getElementById('noticeTitle4').innerText = nb.title4 || "পেমেন্ট নোটিশ";
-      document.getElementById('noticeText4').innerText = nb.text4 || "পেমেন্ট রিকোয়েস্ট দেওয়ার ২৪ ঘণ্টার মধ্যে দেওয়া হয়।";
-    });
+        function requestWithdraw() {
+            let method = document.getElementById('payMethod').value;
+            let amount = document.getElementById('withdrawAmount').value;
 
-    window.closeNotice = function() { 
-      document.getElementById('noticeModal').style.display = 'none'; 
-    };
+            if (method === "Select a Method" || !amount) {
+                alert("দয়া করে সঠিক পেমেন্ট মেথড এবং পরিমাণ দিন।");
+                return;
+            }
 
-    // User Data Sync & Render Candlesticks
-    const todayKey = new Date().toISOString().split('T')[0];
-    const userRef = ref(db, `users/${userId}`);
-    
-    onValue(userRef, (snapshot) => {
-      const d = snapshot.val() || {};
-      
-      if (d.is_banned) {
-        document.body.innerHTML = `
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; background:#0b0f19; color:#ef4444;">
-            <i class="fa-solid fa-ban" style="font-size:4rem; margin-bottom:15px;"></i>
-            <h2 style="color:#fff; margin-bottom:8px;">Account Banned!</h2>
-            <p style="color:#94a3b8; font-size:0.9rem;">নিয়ম না মেনে কাজ করার কারণে আপনার অ্যাকাউন্টটি বট থেকে ব্যান করা হয়েছে।</p>
-          </div>
-        `;
-        return;
-      }
+            if (parseFloat(amount) > balance) {
+                alert("পর্যাপ্ত ব্যালেন্স নেই!");
+                return;
+            }
 
-      if(d.last_work_date && d.last_work_date !== todayKey) {
-        update(userRef, { today_ads: 0, today_earn: 0, last_work_date: todayKey });
-      }
-      const bal = (d.main_balance || 0).toFixed(2);
-      const todayEarn = (d.today_earn || 0).toFixed(2);
-      const todayAds = d.today_ads || 0;
-      
-      let limitDisplay = globalDailyLimit <= 0 ? "00" : globalDailyLimit;
-      document.getElementById('st-today-ads').innerText = `${todayAds}/${limitDisplay}`;
-      document.getElementById('st-referrals').innerText = d.referrals_count || 0;
-      document.getElementById('st-total-views').innerText = d.total_views || 0;
-      document.getElementById('st-total-income').innerText = `${bal} TK`;
-      document.getElementById('st-lifetime-income').innerText = `${(d.lifetime_income || 0).toFixed(2)} TK`;
-      document.getElementById('st-total-withdraw').innerText = `${(d.total_withdraw || 0).toFixed(2)} TK`;
-      document.getElementById('p2-main-balance').innerText = bal;
-      document.getElementById('p4-balance').innerText = bal;
-      document.getElementById('p3-today-earn-value').innerText = `${todayEarn} TK`;
-      window.lastTotalWithdraw = d.total_withdraw || 0;
-
-      renderCandlestickChart(d.daily_history || {}, parseFloat(todayEarn));
-    });
-
-    function renderCandlestickChart(dailyHistory, currentTodayEarn) {
-      const chartContainer = document.getElementById('candlestickChart');
-      if (!chartContainer) return;
-      chartContainer.innerHTML = '';
-
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const days = [];
-      const now = new Date();
-
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(now.getDate() - i);
-        const isoDate = d.toISOString().split('T')[0];
-        const dayNum = d.getDate().toString().padStart(2, '0');
-        const monthName = monthNames[d.getMonth()];
-        const displayLabel = `${dayNum} ${monthName}`;
-        
-        let earn = dailyHistory[isoDate] || 0;
-        if (i === 0) earn = currentTodayEarn;
-
-        days.push({
-          dateKey: isoDate,
-          label: displayLabel,
-          earn: earn
-        });
-      }
-
-      const maxEarn = Math.max(...days.map(d => d.earn), (globalDailyLimit * globalAdReward) || 10);
-
-      days.forEach((dayData, index) => {
-        const prevEarn = index > 0 ? days[index - 1].earn : 0;
-        const isBullish = dayData.earn >= prevEarn;
-        const colorClass = isBullish ? 'green' : 'red';
-        let heightPercent = Math.min(Math.max((dayData.earn / maxEarn) * 90, 8), 95);
-
-        chartContainer.innerHTML += `
-          <div class="candle-column" title="${dayData.label}: ${dayData.earn.toFixed(2)} TK">
-            <div class="candle-stick"></div>
-            <div class="candle-body ${colorClass}" style="height: ${heightPercent}%;"></div>
-            <div class="candle-date-label">${dayData.label}</div>
-          </div>
-        `;
-      });
-    }
-
-    // Country Stats Listener
-    onValue(ref(db, 'country_stats'), (snapshot) => {
-      const container = document.getElementById('country-stats-list');
-      if(!container) return;
-      container.innerHTML = '';
-      const data = snapshot.val();
-      if(!data) { container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-sub);">No work data yet.</p>'; return; }
-      Object.keys(data).forEach(cName => {
-        container.innerHTML += `
-          <div class="country-work-row">
-            <span>🌐 <b>${cName}</b> Server</span>
-            <span style="color:var(--gold); font-weight:700;">${data[cName]} Ads Completed</span>
-          </div>`;
-      });
-    });
-
-    // Load User Payment History
-    const withdrawQuery = query(ref(db, 'withdrawals'), orderByChild('user_id'), equalTo(String(userId)));
-    onValue(withdrawQuery, (snapshot) => {
-      const historyContainer = document.getElementById('payment-history-container');
-      if(!historyContainer) return;
-      historyContainer.innerHTML = '';
-      const data = snapshot.val();
-      if (!data) {
-        historyContainer.innerHTML = '<p style="font-size:0.8rem; color:var(--text-sub); text-align:center;">কোনো পেমেন্ট হিস্টোরি পাওয়া যায়নি</p>';
-        return;
-      }
-      let items = [];
-      Object.keys(data).forEach(id => {
-        items.push(data[id]);
-      });
-      items.reverse();
-
-      items.forEach(item => {
-        let statusText = item.status === 'approved' ? 'Success (সফল)' : item.status === 'rejected' ? 'Rejected (বাতিল)' : 'Pending (অপেক্ষমাণ)';
-        let statusClass = item.status === 'approved' ? 'history-status-approved' : item.status === 'rejected' ? 'history-status-rejected' : 'history-status-pending';
-
-        historyContainer.innerHTML += `
-          <div class="history-item">
-            <div>
-              <div style="font-weight:700; color:#fff;">${item.method} - ${item.amount} TK</div>
-              <div style="font-size:0.75rem; color:var(--text-sub);">${item.account} | ${item.timestamp}</div>
-            </div>
-            <div class="${statusClass}">${statusText}</div>
-          </div>`;
-      });
-    });
-
-    // Leaderboard
-    window.switchLeaderboardTab = function(type, btn) {
-      document.querySelectorAll('.side-tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const container = document.getElementById('leaderboard-ranks-container');
-      container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-sub);">Loading leaderboard...</p>';
-      const field = type === 'earners' ? 'lifetime_income' : 'referrals_count';
-      const leaderboardQuery = query(ref(db, 'users'), orderByChild(field), limitToLast(20));
-      
-      onValue(leaderboardQuery, (snap) => {
-        container.innerHTML = '';
-        let list = [];
-        snap.forEach(child => { list.push(child.val()); });
-        list.reverse();
-        if(list.length === 0) { container.innerHTML = '<p style="font-size:0.8rem; color:var(--text-sub);">No rank data found.</p>'; return; }
-        list.forEach((u, idx) => {
-          const rank = idx + 1;
-          let topClass = rank === 1 ? 'rank-top-1' : rank === 2 ? 'rank-top-2' : rank === 3 ? 'rank-top-3' : '';
-          let trophy = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
-          const valueDisplay = type === 'earners' ? `${(u.lifetime_income || 0).toFixed(2)} TK` : `${u.referrals_count || 0} Referrals`;
-          container.innerHTML += `
-            <div class="rank-item ${topClass}">
-              <div style="display:flex; align-items:center; gap:12px;">
-                <div class="rank-badge">${trophy}</div>
-                <div>
-                  <div style="font-size:0.88rem; font-weight:700;">${u.name || 'Anonymous User'}</div>
-                  <div style="font-size:0.75rem; color:var(--text-sub);">${u.total_views || 0} Total Ads Watched</div>
-                </div>
-              </div>
-              <div style="font-size:0.88rem; font-weight:800; color:var(--gold);">${valueDisplay}</div>
-            </div>`;
-        });
-      }, { onlyOnce: true });
-    };
-
-    window.switchLeaderboardTab('earners', document.querySelectorAll('.side-tab-btn')[0]);
-
-    window.switchTab = function(pageId, btn) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
-      btn.classList.add('active');
-    };
-
-    window.selectMethod = function(method, el) {
-      selectedMethod = method;
-      document.querySelectorAll('.pay-card').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-    };
-
-    // Reward Granting Logic
-    function grantAdReward() {
-      runTransaction(userRef, (userData) => {
-        if (!userData) userData = {};
-        const currentTodayAds = userData.today_ads || 0;
-        if (currentTodayAds >= globalDailyLimit) return;
-        
-        userData.today_ads = currentTodayAds + 1;
-        userData.total_views = (userData.total_views || 0) + 1;
-        userData.main_balance = (userData.main_balance || 0) + globalAdReward;
-        userData.today_earn = (userData.today_earn || 0) + globalAdReward;
-        userData.lifetime_income = (userData.lifetime_income || 0) + globalAdReward;
-        userData.last_work_date = todayKey;
-        userData.last_worked_country = userCountry;
-        userData.name = user.first_name;
-
-        if (!userData.daily_history) userData.daily_history = {};
-        userData.daily_history[todayKey] = userData.today_earn;
-
-        if (!userData.work_history) userData.work_history = {};
-        const workPushRef = push(ref(db, `users/${userId}/work_history`));
-        update(workPushRef, {
-          date: todayKey,
-          time: new Date().toLocaleTimeString(),
-          country: userCountry
-        });
-
-        return userData;
-      }).then(() => {
-        const countryStatRef = ref(db, `country_stats/${userCountry}`);
-        runTransaction(countryStatRef, (currentVal) => (currentVal || 0) + 1);
-
-        const analyticsRef = ref(db, 'ad_analytics');
-        runTransaction(analyticsRef, (currentAnalytics) => {
-          if (!currentAnalytics) currentAnalytics = { total: 0, last_7_days: 0, last_30_days: 0, last_1_year: 0 };
-          currentAnalytics.total = (currentAnalytics.total || 0) + 1;
-          currentAnalytics.last_7_days = (currentAnalytics.last_7_days || 0) + 1;
-          currentAnalytics.last_30_days = (currentAnalytics.last_30_days || 0) + 1;
-          currentAnalytics.last_1_year = (currentAnalytics.last_1_year || 0) + 1;
-          return currentAnalytics;
-        });
-      }).catch(() => {});
-    }
-
-    // AdSpark 'watch' button handler
-    document.getElementById("watch").onclick = () => {
-      if (globalDailyLimit <= 0) {
-        return alert("বর্তমানে কাজ বন্ধ রয়েছে (Today's Limit is 00)!");
-      }
-      const todayAdsText = parseInt(document.getElementById('st-today-ads').innerText.split('/')[0]) || 0;
-      if (todayAdsText >= globalDailyLimit) {
-        return alert(`Daily Limit Reached! (Max ${globalDailyLimit} Ads/day)`);
-      }
-
-      if (targetWorkCountry && userCountry !== targetWorkCountry) {
-        return alert(`এই দেশে কাজ করা নিষেধ! অনুগ্রহ করে '${targetWorkCountry}' সার্ভার বা দেশ কানেক্ট করে কাজ করুন।`);
-      }
-
-      if (typeof showAdspark === 'function') {
-        showAdspark({ ymid: userId })
-          .then(() => {
-            // ad completed — give the reward
-            grantAdReward();
-          })
-          .catch(() => {
-            // no ad available for this user right now
-            alert("এই মুহূর্তে কোনো এড উপলব্ধ নেই, একটু পরে আবার চেষ্টা করুন।");
-          });
-      } else {
-        alert("AdSpark SDK লোড হয়নি, দয়া করে কিছুক্ষণ অপেক্ষা করুন।");
-      }
-    };
-
-    // AdSpark 'bonus' button handler
-    document.getElementById("bonus").onclick = () => {
-      if (typeof showAdsparkPopup === 'function') {
-        showAdsparkPopup({ ymid: userId })
-          .then(() => {
-            // ad completed — give the reward
-            grantAdReward();
-          })
-          .catch(() => {
-            // no ad available for this user right now
-            alert("এই মুহূর্তে কোনো বোনাস এড উপলব্ধ নেই।");
-          });
-      } else {
-        alert("AdSpark SDK লোড হয়নি!");
-      }
-    };
-
-    // Withdraw Logic
-    window.submitWithdraw = function() {
-      const acc = document.getElementById('wd-account').value;
-      const amt = parseFloat(document.getElementById('wd-amount').value);
-      const currentBal = parseFloat(document.getElementById('p4-balance').innerText);
-
-      if(!acc || !amt || amt < globalMinWithdraw) {
-        return alert(`Enter valid details! Minimum withdraw limit is ${globalMinWithdraw} TK.`);
-      }
-      if(amt > currentBal) return alert("Insufficient Balance!");
-
-      push(ref(db, 'withdrawals'), {
-        user_id: String(userId),
-        user_name: user.first_name,
-        method: selectedMethod,
-        account: acc,
-        amount: amt,
-        status: "pending",
-        timestamp: new Date().toLocaleDateString()
-      }).then(() => {
-        update(userRef, { 
-          main_balance: currentBal - amt,
-          total_withdraw: (window.lastTotalWithdraw || 0) + amt
-        });
-        alert("Withdrawal Requested Successfully!");
-        document.getElementById('wd-account').value = '';
-        document.getElementById('wd-amount').value = '';
-      });
-    };
-
-    window.copyRef = function() {
-      navigator.clipboard.writeText(`https://t.me/YourBot?start=${userId}`);
-      alert("Referral Link Copied!");
-    };
-  </script>
+            balance -= parseFloat(amount);
+            document.getElementById('mainHeaderBalance').innerText = `Balance: ${balance.toFixed(2)} TK`;
+            document.getElementById('earnedAmount').innerText = balance.toFixed(2);
+            alert("উইথড্র সফলভাবে সাবমিট হয়েছে!");
+        }
+    </script>
 </body>
 </html>
