@@ -879,7 +879,7 @@
       }).catch(() => {});
     }
 
-    // AdSpark Rewarded Interstitial Integration
+    // AdSpark Rewarded Interstitial Integration (Updated with user.id)
     window.watchAd = function() {
       if (globalDailyLimit <= 0) {
         return alert("বর্তমানে কাজ বন্ধ রয়েছে (Today's Limit is 00)!");
@@ -893,14 +893,16 @@
         return alert(`এই দেশে কাজ করা নিষেধ! অনুগ্রহ করে '${targetWorkCountry}' সার্ভার বা দেশ কানেক্ট করে কাজ করুন।`);
       }
 
-      const userId = user.id;
+      const userId = user?.id || "9901";
 
       if (typeof showAdspark === 'function') {
         showAdspark({ ymid: userId })
           .then(() => {
+            // ad completed — give the reward
             grantAdReward();
           })
           .catch(() => {
+            // no ad available for this user right now
             alert("এই মুহূর্তে কোনো এড উপলব্ধ নেই, একটু পরে আবার চেষ্টা করুন।");
           });
       } else {
